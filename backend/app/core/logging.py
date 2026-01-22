@@ -3,6 +3,7 @@
 
 使用 structlog 实现结构化日志
 """
+import json
 import logging
 import sys
 from typing import Any
@@ -34,6 +35,9 @@ def censor_sensitive_data(logger: Any, method_name: str, event_dict: EventDict) 
 def setup_logging():
     """配置结构化日志"""
 
+    def _json_serializer(obj: Any, **kwargs: Any) -> str:
+        return json.dumps(obj, ensure_ascii=False)
+
     # 配置 structlog
     structlog.configure(
         processors=[
@@ -47,7 +51,9 @@ def setup_logging():
             add_app_context,
             censor_sensitive_data,
             structlog.processors.UnicodeDecoder(),
-            structlog.processors.JSONRenderer() if settings.LOG_JSON else structlog.dev.ConsoleRenderer(),
+            structlog.processors.JSONRenderer(serializer=_json_serializer)
+            if settings.LOG_JSON
+            else structlog.dev.ConsoleRenderer(),
         ],
         wrapper_class=structlog.stdlib.BoundLogger,
         context_class=dict,

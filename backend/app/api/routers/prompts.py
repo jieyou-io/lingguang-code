@@ -1,9 +1,8 @@
 """
 Prompt 配置管理路由
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from app.api.deps import get_db_session
 from app.schemas.prompts import (
     PromptItemResponse,
     PromptListResponse,
@@ -62,7 +61,6 @@ def config_to_prompt_list(engine: str, config: dict) -> PromptListResponse:
 )
 async def get_prompt_config(
     engine: str,
-    session=Depends(get_db_session),
 ):
     """
     获取 Prompt 列表
@@ -91,7 +89,6 @@ async def get_prompt_config(
 async def create_prompt(
     engine: str,
     request: PromptCreateRequest,
-    session=Depends(get_db_session),
 ):
     """创建 Prompt"""
     service = build_service()
@@ -139,7 +136,6 @@ async def update_prompt(
     engine: str,
     prompt_id: str,
     request: PromptUpdateRequest,
-    session=Depends(get_db_session),
 ):
     """更新 Prompt"""
     service = build_service()
@@ -184,7 +180,6 @@ async def update_prompt(
 async def delete_prompt(
     engine: str,
     prompt_id: str,
-    session=Depends(get_db_session),
 ):
     """删除 Prompt"""
     service = build_service()
@@ -224,7 +219,6 @@ async def delete_prompt(
 async def enable_prompt(
     engine: str,
     prompt_id: str,
-    session=Depends(get_db_session),
 ):
     """启用 Prompt"""
     service = build_service()
@@ -264,7 +258,6 @@ async def enable_prompt(
 async def disable_prompt(
     engine: str,
     prompt_id: str,
-    session=Depends(get_db_session),
 ):
     """禁用 Prompt"""
     service = build_service()

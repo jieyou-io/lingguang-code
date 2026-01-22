@@ -1,9 +1,8 @@
 """
 Claude Subagents 管理路由
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from app.api.deps import get_db_session
 from app.schemas.agents import (
     AgentResponse,
     AgentListResponse,
@@ -37,7 +36,6 @@ def build_service() -> ConfigHubService:
     description="获取服务器级 (~/.claude/agents) 的 Claude Subagents 列表。",
 )
 async def list_agents(
-    session=Depends(get_db_session),
 ):
     """列出所有 Subagents"""
     service = build_service()
@@ -57,7 +55,6 @@ async def list_agents(
 )
 async def get_agent(
     agent_id: str,
-    session=Depends(get_db_session),
 ):
     """获取单个 Subagent"""
     service = build_service()
@@ -77,7 +74,6 @@ async def get_agent(
 )
 async def create_agent(
     request: AgentCreateRequest,
-    session=Depends(get_db_session),
 ):
     """创建 Subagent"""
     service = build_service()
@@ -99,7 +95,6 @@ async def create_agent(
 async def update_agent(
     agent_id: str,
     request: AgentUpdateRequest,
-    session=Depends(get_db_session),
 ):
     """更新 Subagent"""
     service = build_service()
@@ -119,7 +114,6 @@ async def update_agent(
 )
 async def delete_agent(
     agent_id: str,
-    session=Depends(get_db_session),
 ):
     """删除 Subagent"""
     service = build_service()
@@ -139,7 +133,6 @@ async def delete_agent(
 )
 async def enable_agent(
     agent_id: str,
-    session=Depends(get_db_session),
 ):
     """启用 Subagent"""
     service = build_service()
@@ -159,7 +152,6 @@ async def enable_agent(
 )
 async def disable_agent(
     agent_id: str,
-    session=Depends(get_db_session),
 ):
     """禁用 Subagent"""
     service = build_service()

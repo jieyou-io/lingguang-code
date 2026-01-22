@@ -4,10 +4,9 @@ Claude 路由
 import json
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Query
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
 
-from app.api.deps import get_db_session
 from app.core.config import settings
 from app.core.sse import merge_with_keepalive, sse_manager
 from app.schemas.claude import (
@@ -29,9 +28,9 @@ from app.services.storage.repositories import StorageRepository
 router = APIRouter()
 
 
-def build_service(session) -> ClaudeService:
+def build_service() -> ClaudeService:
     """创建 Claude 服务实例"""
-    repository = StorageRepository(session)
+    repository = StorageRepository()
     runner = ClaudeRunner()
     return ClaudeService(repository, runner, claude_registry)
 
@@ -44,9 +43,8 @@ def build_service(session) -> ClaudeService:
 )
 async def execute_claude(
     payload: ClaudeExecuteRequest,
-    session=Depends(get_db_session),
 ):
-    service = build_service(session)
+    service = build_service()
     session_id = await service.execute(payload)
     return ClaudeSessionResponse(sessionId=session_id, status="started")
 
@@ -59,9 +57,8 @@ async def execute_claude(
 )
 async def continue_claude(
     payload: ClaudeExecuteRequest,
-    session=Depends(get_db_session),
 ):
-    service = build_service(session)
+    service = build_service()
     # 🔥 关键：使用 --resume 恢复指定的历史对话
     session_id = await service.execute(payload, resume_session_id=payload.sessionId)
     return ClaudeSessionResponse(sessionId=session_id, status="started")
@@ -75,9 +72,8 @@ async def continue_claude(
 )
 async def resume_claude(
     payload: ClaudeResumeRequest,
-    session=Depends(get_db_session),
 ):
-    service = build_service(session)
+    service = build_service()
     session_id = await service.resume(payload)
     return ClaudeSessionResponse(sessionId=session_id, status="resumed")
 
@@ -90,9 +86,8 @@ async def resume_claude(
 )
 async def cancel_claude(
     payload: ClaudeCancelRequest,
-    session=Depends(get_db_session),
 ):
-    service = build_service(session)
+    service = build_service()
     await service.cancel(payload.sessionId)
     return ClaudeSessionResponse(sessionId=payload.sessionId, status="canceled")
 
@@ -104,9 +99,8 @@ async def cancel_claude(
 )
 async def stream_claude(
     sessionId: str,
-    session=Depends(get_db_session),
 ):
-    service = build_service(session)
+    service = build_service()
 
     async def event_source():
         sse_manager.register_connection(sessionId)
@@ -134,10 +128,9 @@ async def stream_claude(
 )
 async def send_permission_response(
     payload: ClaudePermissionResponse,
-    session=Depends(get_db_session),
 ):
     """发送权限响应到 Claude CLI stdin"""
-    service = build_service(session)
+    service = build_service()
     success = await service.send_permission_response(
         session_id=payload.sessionId,
         response=payload.response,

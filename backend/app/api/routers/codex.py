@@ -3,10 +3,9 @@ Codex 路由
 """
 import json
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
 
-from app.api.deps import get_db_session
 from app.core.config import settings
 from app.core.sse import sse_manager
 from app.schemas.codex import (
@@ -22,9 +21,9 @@ from app.services.storage.repositories import StorageRepository
 router = APIRouter()
 
 
-def build_service(session) -> CodexService:
+def build_service() -> CodexService:
     """创建 Codex 服务实例"""
-    repository = StorageRepository(session)
+    repository = StorageRepository()
     runner = CodexRunner()
     return CodexService(repository, runner, codex_registry)
 
@@ -37,9 +36,8 @@ def build_service(session) -> CodexService:
 )
 async def execute_codex(
     payload: CodexExecuteRequest,
-    session=Depends(get_db_session),
 ):
-    service = build_service(session)
+    service = build_service()
     session_id = await service.execute(payload)
     return CodexSessionResponse(sessionId=session_id, status="started")
 
@@ -52,11 +50,10 @@ async def execute_codex(
 )
 async def continue_codex(
     payload: CodexResumeRequest,
-    session=Depends(get_db_session),
 ):
     # 🔥 使用 service.execute 方法，与 execute_codex 保持一致
     # Codex 是通过 HTTP API 调用的，不是 CLI 进程
-    service = build_service(session)
+    service = build_service()
 
     # 将 CodexResumeRequest 转换为 CodexExecuteRequest 格式
     from app.schemas.codex import CodexExecuteRequest
@@ -80,9 +77,8 @@ async def continue_codex(
 )
 async def resume_codex(
     payload: CodexResumeRequest,
-    session=Depends(get_db_session),
 ):
-    service = build_service(session)
+    service = build_service()
     session_id = await service.resume(payload)
     return CodexSessionResponse(sessionId=session_id, status="resumed")
 
@@ -95,9 +91,8 @@ async def resume_codex(
 )
 async def cancel_codex(
     payload: CodexCancelRequest,
-    session=Depends(get_db_session),
 ):
-    service = build_service(session)
+    service = build_service()
     await service.cancel(payload.sessionId)
     return CodexSessionResponse(sessionId=payload.sessionId, status="canceled")
 
@@ -109,9 +104,8 @@ async def cancel_codex(
 )
 async def stream_codex(
     sessionId: str,
-    session=Depends(get_db_session),
 ):
-    service = build_service(session)
+    service = build_service()
 
     async def event_source():
         sse_manager.register_connection(sessionId)

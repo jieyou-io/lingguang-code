@@ -33,10 +33,6 @@ class Settings(BaseSettings):
     CODEX_CLI_PATH: str = "codex"
     GEMINI_CLI_PATH: str = "gemini"
 
-    # Codex API 配置
-    CODEX_API_BASE: str = "http://localhost:9000"
-    CODEX_API_KEY: str = ""
-
     # 进程管理配置
     MAX_CONCURRENT_SESSIONS: int = 10
     SESSION_TIMEOUT_SECONDS: int = 1800  # 30 分钟
@@ -48,10 +44,24 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "info"
     LOG_JSON: bool = True
 
+    # Feishu Bot 配置
+    FEISHU_ENABLE: bool = False
+    FEISHU_APP_ID: str = ""
+    FEISHU_APP_SECRET: str = ""
+    FEISHU_BOT_NAME: str = "FeishuBot"
+    FEISHU_ENCRYPT_KEY: str = ""
+    FEISHU_VERIFICATION_TOKEN: str = ""
+    FEISHU_BOT_OPEN_ID: str = ""
+    FEISHU_STATE_PATH: str = "~/.anycode/feishu_state.json"
+    FEISHU_DEFAULT_ENGINE: str = "claude"
+    FEISHU_DEFAULT_MODEL: str = "claude-sonnet-4-5"
+    FEISHU_REQUIRE_MENTION_DEFAULT: bool = True
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        case_sensitive=True
+        case_sensitive=True,
+        extra="ignore",
     )
 
 # 全局配置实例

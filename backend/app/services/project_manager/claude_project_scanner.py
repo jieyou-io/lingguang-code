@@ -1,7 +1,6 @@
 """
 Claude 项目扫描器
 
-从 ~/.claude/projects/ 目录扫描项目，与原 Tauri 实现保持一致。
 """
 import json
 from pathlib import Path
@@ -16,7 +15,6 @@ class ClaudeProjectScanner:
     Claude 项目扫描器
 
     从 ~/.claude/projects/ 目录扫描项目，读取会话文件提取项目信息。
-    与原 src-tauri/src/commands/claude/project_store.rs 实现保持一致。
     """
 
     def __init__(self, claude_dir: Optional[Path] = None):
@@ -135,7 +133,7 @@ class ClaudeProjectScanner:
                     continue
 
                 try:
-                    with session_file.open("r", encoding="utf-8") as f:
+                    with session_file.open("r", encoding="utf-8", errors="ignore") as f:
                         # 读取前几行，查找 cwd 字段
                         for _ in range(10):  # 最多读取前10行
                             line = f.readline().strip()
@@ -273,7 +271,7 @@ class ClaudeProjectScanner:
                 todo_data = None
                 if todo_path.exists():
                     try:
-                        with todo_path.open("r", encoding="utf-8") as f:
+                        with todo_path.open("r", encoding="utf-8", errors="ignore") as f:
                             todo_data = json.load(f)
                     except (OSError, json.JSONDecodeError) as exc:
                         logger.debug("claude_todo_read_failed",
@@ -315,7 +313,7 @@ class ClaudeProjectScanner:
             (first_message, message_timestamp) 元组
         """
         try:
-            with session_file.open("r", encoding="utf-8") as f:
+            with session_file.open("r", encoding="utf-8", errors="ignore") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
@@ -357,7 +355,7 @@ class ClaudeProjectScanner:
         last_timestamp = None
 
         try:
-            with session_file.open("r", encoding="utf-8") as f:
+            with session_file.open("r", encoding="utf-8", errors="ignore") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
@@ -388,7 +386,7 @@ class ClaudeProjectScanner:
             模型名称
         """
         try:
-            with session_file.open("r", encoding="utf-8") as f:
+            with session_file.open("r", encoding="utf-8", errors="ignore") as f:
                 for line in f:
                     line = line.strip()
                     if not line:
@@ -436,7 +434,7 @@ class ClaudeProjectScanner:
             引擎名称: "claude" | "codex" | "gemini" | None
         """
         try:
-            with session_file.open("r", encoding="utf-8") as f:
+            with session_file.open("r", encoding="utf-8", errors="ignore") as f:
                 # 读取前几行判断
                 for _ in range(10):
                     line = f.readline().strip()

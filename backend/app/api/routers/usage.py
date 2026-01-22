@@ -21,6 +21,7 @@ async def get_usage_stats(
 ):
     """
     获取使用统计
+
     """
     service = UsageService()
     stats = await service.get_stats(days=days)
@@ -46,6 +47,7 @@ async def get_session_stats(
 
     功能与 /v1/usage/stats 的 by_project 字段重复。
     建议使用 /v1/usage/stats 接口替代。
+
     """
     service = UsageService()
     stats = await service.get_session_stats(since=since, until=until, order=order)

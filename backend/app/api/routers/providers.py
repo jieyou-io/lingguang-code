@@ -1,9 +1,8 @@
 """
 Provider 配置管理路由
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from app.api.deps import get_db_session
 from app.schemas.providers import (
     ProviderConfigResponse,
     ProviderConfigUpdateRequest,
@@ -37,7 +36,6 @@ def build_service() -> ConfigHubService:
 )
 async def get_provider_config(
     engine: str,
-    session=Depends(get_db_session),
 ):
     """
     获取当前 Provider 配置
@@ -57,11 +55,9 @@ async def get_provider_config(
 )
 async def get_provider_presets(
     engine: str,
-    session=Depends(get_db_session),
 ):
     """
     获取 Provider 预设列表
-
 
     """
     service = build_service()
@@ -87,7 +83,6 @@ async def get_provider_presets(
 async def create_provider_preset(
     engine: str,
     request: ProviderPresetCreateRequest,
-    session=Depends(get_db_session),
 ):
     """添加 Provider 预设"""
     service = build_service()
@@ -111,7 +106,6 @@ async def update_provider_preset(
     engine: str,
     preset_id: str,
     request: ProviderPresetCreateRequest,
-    session=Depends(get_db_session),
 ):
     """更新 Provider 预设"""
     service = build_service()
@@ -133,7 +127,6 @@ async def update_provider_preset(
 async def delete_provider_preset(
     engine: str,
     preset_id: str,
-    session=Depends(get_db_session),
 ):
     """删除 Provider 预设"""
     service = build_service()
@@ -151,11 +144,9 @@ async def delete_provider_preset(
 async def switch_provider(
     engine: str,
     preset_id: str,
-    session=Depends(get_db_session),
 ):
     """
     切换 Provider
-
 
     """
     service = build_service()
@@ -173,7 +164,6 @@ async def switch_provider(
 async def update_provider_config(
     engine: str,
     request: ProviderConfigUpdateRequest,
-    session=Depends(get_db_session),
 ):
     """更新 Provider 配置"""
     service = build_service()
@@ -193,7 +183,6 @@ async def update_provider_config(
 )
 async def enable_provider(
     engine: str,
-    session=Depends(get_db_session),
 ):
     """启用 Provider"""
     service = build_service()
@@ -209,7 +198,6 @@ async def enable_provider(
 )
 async def disable_provider(
     engine: str,
-    session=Depends(get_db_session),
 ):
     """禁用 Provider"""
     service = build_service()

@@ -82,7 +82,7 @@ class ClaudeRunner:
 
         args.extend([
             "--output-format", "stream-json",
-            "--dangerously-skip-permissions",  # 跳过权限检查（与 Tauri 项目一致）
+            "--dangerously-skip-permissions",  # 跳过权限检查
             "--verbose",
         ])
 

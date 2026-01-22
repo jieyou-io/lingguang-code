@@ -74,6 +74,7 @@ class GeminiService:
             approval_mode=payload.approvalMode,
             include_directories=payload.includeDirectories,
             debug=payload.debug,
+            session_id=payload.sessionId,
         )
         self._registry.register(session_id, process)
         return session_id

@@ -27,6 +27,7 @@ from app.api.routers import (
     engine_status,
     models,
 )
+from app.services.feishu.bot import feishu_bot
 
 # 初始化日志
 setup_logging()
@@ -74,6 +75,16 @@ app.include_router(models.router, tags=["Models"])
 # 异常处理
 app.add_exception_handler(APIError, api_error_handler)
 app.add_exception_handler(Exception, general_exception_handler)
+
+
+@app.on_event("startup")
+async def start_feishu_bot() -> None:
+    feishu_bot.start()
+
+
+@app.on_event("shutdown")
+async def stop_feishu_bot() -> None:
+    feishu_bot.stop()
 
 # 启动事件
 @app.on_event("startup")

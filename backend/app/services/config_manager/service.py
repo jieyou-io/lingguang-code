@@ -170,7 +170,7 @@ class ConfigHubService:
         """
         读取指定引擎的完整配置
 
-        返回完整的 settings.json 内容，与原 Tauri 实现保持一致。
+        返回完整的 settings.json 内容。
 
         Args:
             engine: 引擎名称 ("claude" | "codex" | "gemini")

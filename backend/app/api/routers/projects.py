@@ -37,7 +37,6 @@ def build_service() -> ProjectManagerService:
 async def list_integrated_projects():
     """
     获取所有已集成项目
-
     """
     service = build_service()
     projects = await service.list_integrated_projects()
@@ -57,7 +56,6 @@ async def get_project_sessions(
 ):
     """
     获取项目会话列表
-
     """
     service = build_service()
     sessions = service.get_project_sessions(project_id)
@@ -164,7 +162,6 @@ async def get_claude_session_history(
 ):
     """
     获取 Claude 会话历史消息
-
     """
     loader = ClaudeSessionLoader()
     try:

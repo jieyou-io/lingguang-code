@@ -1,9 +1,8 @@
 """
 Claude Skills 管理路由
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from app.api.deps import get_db_session
 from app.schemas.skills import (
     SkillResponse,
     SkillListResponse,
@@ -37,7 +36,6 @@ def build_service() -> ConfigHubService:
     description="获取服务器级 (~/.claude/skills) 的 Claude Skills 列表。",
 )
 async def list_skills(
-    session=Depends(get_db_session),
 ):
     """列出所有 Skills"""
     service = build_service()
@@ -57,7 +55,6 @@ async def list_skills(
 )
 async def get_skill(
     skill_id: str,
-    session=Depends(get_db_session),
 ):
     """获取单个 Skill"""
     service = build_service()
@@ -77,7 +74,6 @@ async def get_skill(
 )
 async def create_skill(
     request: SkillCreateRequest,
-    session=Depends(get_db_session),
 ):
     """创建 Skill"""
     service = build_service()
@@ -99,7 +95,6 @@ async def create_skill(
 async def update_skill(
     skill_id: str,
     request: SkillUpdateRequest,
-    session=Depends(get_db_session),
 ):
     """更新 Skill"""
     service = build_service()
@@ -119,7 +114,6 @@ async def update_skill(
 )
 async def delete_skill(
     skill_id: str,
-    session=Depends(get_db_session),
 ):
     """删除 Skill"""
     service = build_service()
@@ -139,7 +133,6 @@ async def delete_skill(
 )
 async def enable_skill(
     skill_id: str,
-    session=Depends(get_db_session),
 ):
     """启用 Skill"""
     service = build_service()
@@ -159,7 +152,6 @@ async def enable_skill(
 )
 async def disable_skill(
     skill_id: str,
-    session=Depends(get_db_session),
 ):
     """禁用 Skill"""
     service = build_service()

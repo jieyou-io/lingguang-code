@@ -1,9 +1,8 @@
 """
 翻译路由
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from app.api.deps import get_db_session
 from app.schemas.translator import (
     TranslateRequest,
     TranslateResponse,
@@ -17,8 +16,8 @@ from app.services.translator.service import TranslatorService
 router = APIRouter()
 
 
-def build_service(session) -> TranslatorService:
-    repository = StorageRepository(session)
+def build_service() -> TranslatorService:
+    repository = StorageRepository()
     return TranslatorService(repository)
 
 
@@ -30,9 +29,8 @@ def build_service(session) -> TranslatorService:
 )
 async def translate(
     payload: TranslateRequest,
-    session=Depends(get_db_session),
 ):
-    service = build_service(session)
+    service = build_service()
     result = await service.translate(
         text=payload.text,
         source_lang=payload.sourceLang,
@@ -49,9 +47,8 @@ async def translate(
 )
 async def translate_batch(
     payload: TranslateBatchRequest,
-    session=Depends(get_db_session),
 ):
-    service = build_service(session)
+    service = build_service()
     results = await service.translate_batch([item.model_dump() for item in payload.items])
     return TranslateBatchResponse(
         items=[TranslateBatchResponseItem(**item) for item in results]

@@ -1,9 +1,8 @@
 """
 Claude Plugins 管理路由
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from app.api.deps import get_db_session
 from app.schemas.plugins import (
     PluginResponse,
     PluginListResponse,
@@ -37,7 +36,6 @@ def build_service() -> ConfigHubService:
     description="获取服务器级 (~/.claude/plugins) 的 Claude Plugins 列表。",
 )
 async def list_plugins(
-    session=Depends(get_db_session),
 ):
     """列出所有 Plugins"""
     service = build_service()
@@ -54,7 +52,6 @@ async def list_plugins(
 )
 async def install_plugin(
     request: PluginInstallRequest,
-    session=Depends(get_db_session),
 ):
     """安装 Plugin"""
     service = build_service()
@@ -70,7 +67,6 @@ async def install_plugin(
 )
 async def enable_plugin(
     plugin_id: str,
-    session=Depends(get_db_session),
 ):
     """启用 Plugin"""
     service = build_service()
@@ -87,7 +83,6 @@ async def enable_plugin(
 )
 async def disable_plugin(
     plugin_id: str,
-    session=Depends(get_db_session),
 ):
     """禁用 Plugin"""
     service = build_service()

@@ -37,7 +37,6 @@ class ProjectManagerService:
         查询所有已集成项目
 
         从 ~/.claude/projects/ 目录扫描所有使用过 Claude CLI 的项目。
-        与原 Tauri 实现保持一致。
 
         Returns:
             项目列表，每个项目包含：

@@ -29,10 +29,10 @@ class GeminiRunner:
         # 🔥 Gemini CLI 通过 cwd 确定项目路径，不需要 --project 参数
         args: List[str] = [settings.GEMINI_CLI_PATH]
 
-        # 🔥 如果提供了 session_id，使用 --resume latest 恢复最新会话
+        # 🔥 如果提供了 session_id，直接恢复指定会话
         # 然后通过位置参数传递新的 prompt（不能使用 -i，会冲突）
         if session_id:
-            args.extend(["--resume", "latest"])
+            args.extend(["--resume", session_id])
 
         # 🔥 位置参数传递 prompt（新会话或恢复会话都使用位置参数）
         args.append(prompt)

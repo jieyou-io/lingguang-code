@@ -4,10 +4,9 @@ Gemini 路由
 import json
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
 
-from app.api.deps import get_db_session
 from app.core.config import settings
 from app.core.sse import sse_manager
 from app.schemas.gemini import GeminiExecuteRequest, GeminiCancelRequest, GeminiSessionResponse
@@ -18,9 +17,9 @@ from app.services.storage.repositories import StorageRepository
 router = APIRouter()
 
 
-def build_service(session) -> GeminiService:
+def build_service() -> GeminiService:
     """创建 Gemini 服务实例"""
-    repository = StorageRepository(session)
+    repository = StorageRepository()
     runner = GeminiRunner()
     return GeminiService(repository, runner, gemini_registry)
 
@@ -33,9 +32,8 @@ def build_service(session) -> GeminiService:
 )
 async def execute_gemini(
     payload: GeminiExecuteRequest,
-    session=Depends(get_db_session),
 ):
-    service = build_service(session)
+    service = build_service()
     session_id = await service.execute(payload)
     return GeminiSessionResponse(sessionId=session_id, status="started")
 
@@ -48,7 +46,6 @@ async def execute_gemini(
 )
 async def continue_gemini(
     payload: GeminiExecuteRequest,
-    session=Depends(get_db_session),
 ):
     # 🔥 跳过数据库依赖，直接启动 Gemini CLI
     # Gemini CLI 会自动从 ~/.gemini/tmp/ 恢复会话
@@ -79,9 +76,8 @@ async def continue_gemini(
 )
 async def cancel_gemini(
     payload: GeminiCancelRequest,
-    session=Depends(get_db_session),
 ):
-    service = build_service(session)
+    service = build_service()
     if payload.sessionId:
         await service.cancel(payload.sessionId)
         return GeminiSessionResponse(sessionId=payload.sessionId, status="canceled")
@@ -96,9 +92,8 @@ async def cancel_gemini(
 )
 async def stream_gemini(
     sessionId: str,
-    session=Depends(get_db_session),
 ):
-    service = build_service(session)
+    service = build_service()
 
     async def event_source():
         sse_manager.register_connection(sessionId)

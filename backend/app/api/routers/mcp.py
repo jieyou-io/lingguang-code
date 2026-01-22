@@ -1,9 +1,8 @@
 """
 MCP 路由
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from app.api.deps import get_db_session
 from app.schemas.mcp import (
     MCPListResponse,
     MCPTestResponse,
@@ -19,7 +18,7 @@ from app.services.mcp.service import MCPService
 router = APIRouter()
 
 
-def build_service(session) -> MCPService:
+def build_service() -> MCPService:
     return MCPService(mcp_registry)
 
 
@@ -31,9 +30,8 @@ def build_service(session) -> MCPService:
 )
 async def list_servers(
     engine: str,
-    session=Depends(get_db_session),
 ):
-    service = build_service(session)
+    service = build_service()
     servers = await service.list_servers(engine)
     return MCPListResponse(servers=servers)
 
@@ -47,9 +45,8 @@ async def list_servers(
 async def test_server(
     engine: str,
     id: str,
-    session=Depends(get_db_session),
 ):
-    service = build_service(session)
+    service = build_service()
     result = await service.test_server(id)
     return MCPTestResponse(id=id, status=result["status"], detail=result["detail"])
 
@@ -63,10 +60,9 @@ async def test_server(
 async def create_server(
     engine: str,
     request: MCPCreateRequest,
-    session=Depends(get_db_session),
 ):
     """创建 MCP 服务器"""
-    service = build_service(session)
+    service = build_service()
     server = await service.create_server(engine, request.model_dump())
     return MCPServerItem(**server, status={"running": False, "error": None, "lastChecked": None})
 
@@ -81,10 +77,9 @@ async def update_server(
     engine: str,
     id: str,
     request: MCPUpdateRequest,
-    session=Depends(get_db_session),
 ):
     """更新 MCP 服务器"""
-    service = build_service(session)
+    service = build_service()
     server = await service.update_server(engine, id, request.model_dump(exclude_none=True))
     return MCPServerItem(**server, status={"running": False, "error": None, "lastChecked": None})
 
@@ -97,10 +92,9 @@ async def update_server(
 async def delete_server(
     engine: str,
     id: str,
-    session=Depends(get_db_session),
 ):
     """删除 MCP 服务器"""
-    service = build_service(session)
+    service = build_service()
     await service.delete_server(engine, id)
     return {"success": True}
 
@@ -114,10 +108,9 @@ async def delete_server(
 async def start_server(
     engine: str,
     id: str,
-    session=Depends(get_db_session),
 ):
     """启动 MCP 服务器"""
-    service = build_service(session)
+    service = build_service()
     result = await service.start_server(engine, id)
     return MCPStartResponse(**result)
 
@@ -131,9 +124,8 @@ async def start_server(
 async def stop_server(
     engine: str,
     id: str,
-    session=Depends(get_db_session),
 ):
     """停止 MCP 服务器"""
-    service = build_service(session)
+    service = build_service()
     result = await service.stop_server(id)
     return MCPStopResponse(**result)

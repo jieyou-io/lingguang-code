@@ -24,6 +24,7 @@ structlog==24.1.0
 
 # 工具库
 python-dateutil==2.8.2
+lark-oapi==1.5.2
 
 # 测试
 pytest==7.4.4

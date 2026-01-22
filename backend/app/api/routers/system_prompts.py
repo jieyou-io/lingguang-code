@@ -3,10 +3,9 @@
 
 管理 CLAUDE.md, AGENTS.md, GEMINI.md 等系统提示词文件
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from pydantic import BaseModel
 
-from app.api.deps import get_db_session
 from app.services.system_prompts import SystemPromptsService
 
 router = APIRouter()
@@ -33,7 +32,6 @@ class SystemPromptUpdateRequest(BaseModel):
 )
 async def get_system_prompt(
     engine: str,
-    session=Depends(get_db_session),
 ):
     """
     获取系统提示词
@@ -62,7 +60,6 @@ async def get_system_prompt(
 async def update_system_prompt(
     engine: str,
     request: SystemPromptUpdateRequest,
-    session=Depends(get_db_session),
 ):
     """
     更新系统提示词

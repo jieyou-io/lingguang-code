@@ -1,9 +1,8 @@
 """
 上下文管理路由
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from app.api.deps import get_db_session
 from app.schemas.context_manager import (
     ContextConfigResponse,
     ContextCompactRequest,
@@ -15,8 +14,8 @@ from app.services.storage.repositories import StorageRepository
 router = APIRouter()
 
 
-def build_service(session) -> ContextManagerService:
-    repository = StorageRepository(session)
+def build_service() -> ContextManagerService:
+    repository = StorageRepository()
     return ContextManagerService(repository)
 
 
@@ -27,9 +26,8 @@ def build_service(session) -> ContextManagerService:
     description="返回当前上下文压缩配置。",
 )
 async def get_config(
-    session=Depends(get_db_session),
 ):
-    service = build_service(session)
+    service = build_service()
     return ContextConfigResponse(**service.get_config())
 
 
@@ -41,8 +39,7 @@ async def get_config(
 )
 async def compact(
     payload: ContextCompactRequest,
-    session=Depends(get_db_session),
 ):
-    service = build_service(session)
+    service = build_service()
     summary = await service.compact(payload.sessionId)
     return ContextCompactResponse(sessionId=payload.sessionId, status="completed", summary=summary)
