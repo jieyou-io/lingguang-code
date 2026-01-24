@@ -22,13 +22,16 @@
       <div class="flex-1 overflow-hidden grid" :class="previewOpen ? 'grid-cols-[1fr,2fr]' : 'grid-cols-1'">
         <div class="border-r border-border overflow-y-auto p-3">
           <FileTreeNode
-            v-for="node in mockFileTree"
+            v-for="node in fileTree"
             :key="node.id"
             :node="node"
             :depth="0"
             :selected-id="selectedId"
             @select="handleSelect"
           />
+          <div v-if="fileTree.length === 0" class="py-6 text-center text-sm text-muted-foreground">
+            暂无可用文件
+          </div>
         </div>
 
         <div v-if="previewOpen" class="overflow-y-auto p-4">
@@ -38,8 +41,10 @@
               <span class="font-mono">{{ selectedFile.name }}</span>
             </div>
             <pre class="p-3 rounded-lg bg-secondary/50 border border-border text-xs overflow-x-auto">
-              <code>{{ selectedFile.content || '暂无预览内容' }}</code>
+              <code>{{ selectedContent || '暂无预览内容' }}</code>
             </pre>
+            <div v-if="contentLoading" class="text-xs text-muted-foreground">加载中...</div>
+            <div v-else-if="contentTruncated" class="text-xs text-muted-foreground">内容过长，已截断显示</div>
           </div>
           <div v-else class="text-muted-foreground text-sm">请选择一个文件查看预览</div>
         </div>
@@ -49,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineComponent, ref } from 'vue';
+import { computed, defineComponent, h, ref, watch } from 'vue';
 import {
   File,
   Folder,
@@ -64,19 +69,14 @@ import {
   PanelLeftClose,
   PanelLeft,
 } from 'lucide-vue-next';
-
-interface FileNode {
-  id: string;
-  name: string;
-  type: 'file' | 'folder';
-  children?: FileNode[];
-  content?: string;
-  extension?: string;
-}
+import { ProjectFileNode } from '@/types';
+import { getProjectFileContent } from '@/lib/services/project-files';
 
 const props = defineProps<{
   open: boolean;
   projectName: string;
+  projectPath?: string;
+  fileTree?: ProjectFileNode[];
 }>();
 
 const emit = defineEmits<{
@@ -85,84 +85,12 @@ const emit = defineEmits<{
 
 const previewOpen = ref(true);
 const selectedId = ref<string | null>(null);
+const contentLoading = ref(false);
+const contentTruncated = ref(false);
+const contentCache = ref<Record<string, string>>({});
+const truncatedCache = ref<Record<string, boolean>>({});
 
-const mockFileTree: FileNode[] = [
-  {
-    id: '1',
-    name: 'src',
-    type: 'folder',
-    children: [
-      {
-        id: '1-1',
-        name: 'components',
-        type: 'folder',
-        children: [
-          {
-            id: '1-1-1',
-            name: 'Button.vue',
-            type: 'file',
-            extension: 'vue',
-            content: `<template>\n  <button :class=\"['btn', variantClass]\" @click=\"$emit('click')\">\n    <slot />\n  </button>\n</template>\n\n<script setup lang=\"ts\">\nconst props = withDefaults(defineProps<{ variant?: 'primary' | 'secondary' }>(), {\n  variant: 'primary',\n});\n\nconst variantClass = props.variant === 'primary' ? 'btn-primary' : 'btn-secondary';\n<\\/script>`,
-          },
-          {
-            id: '1-1-2',
-            name: 'Header.vue',
-            type: 'file',
-            extension: 'vue',
-            content: `<template>\n  <header class=\"header\">\n    <h1>My App</h1>\n    <nav>\n      <Button>Home</Button>\n      <Button variant=\"secondary\">About</Button>\n    </nav>\n  </header>\n</template>\n\n<script setup lang=\"ts\">\nimport Button from './Button.vue';\n<\\/script>`,
-          },
-        ],
-      },
-      {
-        id: '1-2',
-        name: 'hooks',
-        type: 'folder',
-        children: [
-          {
-            id: '1-2-1',
-            name: 'useAuth.ts',
-            type: 'file',
-            extension: 'ts',
-            content: `import { ref, onMounted } from 'vue';\n\nexport function useAuth() {\n  const user = ref(null);\n  const loading = ref(true);\n\n  onMounted(() => {\n    loading.value = false;\n  });\n\n  return { user, loading };\n}`,
-          },
-        ],
-      },
-      {
-        id: '1-3',
-        name: 'App.vue',
-        type: 'file',
-        extension: 'vue',
-        content: `<template>\n  <div class=\"app\">\n    <Header />\n    <main>\n      <h2>Welcome to My App</h2>\n    </main>\n  </div>\n</template>\n\n<script setup lang=\"ts\">\nimport Header from './components/Header.vue';\n<\\/script>`,
-      },
-    ],
-  },
-  {
-    id: '2',
-    name: 'public',
-    type: 'folder',
-    children: [
-      { id: '2-1', name: 'favicon.ico', type: 'file', extension: 'ico' },
-      { id: '2-2', name: 'logo.png', type: 'file', extension: 'png' },
-    ],
-  },
-  {
-    id: '3',
-    name: 'package.json',
-    type: 'file',
-    extension: 'json',
-    content: `{
-  "name": "my-app",
-  "version": "1.0.0"
-}`,
-  },
-  {
-    id: '4',
-    name: 'README.md',
-    type: 'file',
-    extension: 'md',
-    content: `# My App\n\nA modern React application.\n`,
-  },
-];
+const fileTree = computed(() => props.fileTree ?? []);
 
 const fileIcon = (extension?: string) => {
   switch (extension) {
@@ -189,9 +117,9 @@ const fileIcon = (extension?: string) => {
   }
 };
 
-const flattenFiles = (nodes: FileNode[]): FileNode[] => {
-  const result: FileNode[] = [];
-  const walk = (list: FileNode[]) => {
+const flattenFiles = (nodes: ProjectFileNode[]): ProjectFileNode[] => {
+  const result: ProjectFileNode[] = [];
+  const walk = (list: ProjectFileNode[]) => {
     list.forEach(node => {
       result.push(node);
       if (node.children) walk(node.children);
@@ -201,10 +129,16 @@ const flattenFiles = (nodes: FileNode[]): FileNode[] => {
   return result;
 };
 
-const allNodes = computed(() => flattenFiles(mockFileTree));
+const allNodes = computed(() => flattenFiles(fileTree.value));
 const selectedFile = computed(() => allNodes.value.find(node => node.id === selectedId.value && node.type === 'file'));
+const selectedContent = computed(() => {
+  const file = selectedFile.value;
+  if (!file?.path) return '';
+  if (file.content) return file.content;
+  return contentCache.value[file.path] || '';
+});
 
-const handleSelect = (node: FileNode) => {
+const handleSelect = (node: ProjectFileNode) => {
   if (node.type === 'file') {
     selectedId.value = node.id;
   }
@@ -215,7 +149,7 @@ const close = () => emit('update:open', false);
 const FileTreeNode = defineComponent({
   name: 'FileTreeNode',
   props: {
-    node: { type: Object as () => FileNode, required: true },
+    node: { type: Object as () => ProjectFileNode, required: true },
     depth: { type: Number, default: 0 },
     selectedId: { type: String, default: null },
   },
@@ -237,36 +171,97 @@ const FileTreeNode = defineComponent({
       }
     };
 
-    return { expanded, icon, handleClick, ChevronDown, ChevronRight, fileIcon };
+    return () => {
+      const isSelected = localProps.node.id === localProps.selectedId;
+      const paddingLeft = `${localProps.depth * 12 + 8}px`;
+      const caret =
+        localProps.node.type === 'folder'
+          ? h(expanded.value ? ChevronDown : ChevronRight, {
+              class: 'w-3.5 h-3.5 text-muted-foreground',
+            })
+          : h('span');
+
+      const iconNode = h(icon.value, {
+        class: [
+          'w-4 h-4',
+          localProps.node.type === 'folder' ? 'text-primary' : 'text-muted-foreground',
+        ],
+      });
+
+      const label = h('span', { class: 'text-sm truncate' }, localProps.node.name);
+
+      const button = h(
+        'button',
+        {
+          onClick: handleClick,
+          class: [
+            'w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-colors',
+            isSelected ? 'bg-primary/10 text-primary' : 'hover:bg-muted',
+          ],
+          style: { paddingLeft },
+        },
+        [caret, iconNode, label]
+      );
+
+      const children =
+        localProps.node.type === 'folder' && expanded.value && localProps.node.children
+          ? h(
+              'div',
+              localProps.node.children.map((child) =>
+                h(FileTreeNode, {
+                  key: child.id,
+                  node: child,
+                  depth: localProps.depth + 1,
+                  selectedId: localProps.selectedId,
+                  onSelect: (node: ProjectFileNode) => emit('select', node),
+                })
+              )
+            )
+          : null;
+
+      return h('div', [button, children]);
+    };
   },
-  template: `
-    <div>
-      <button
-        @click="handleClick"
-        :class="[
-          'w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-colors',
-          node.id === selectedId ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-        ]"
-        :style="{ paddingLeft: (depth * 12 + 8) + 'px' }"
-      >
-        <component
-          :is="node.type === 'folder' ? (expanded ? ChevronDown : ChevronRight) : 'span'"
-          class="w-3.5 h-3.5 text-muted-foreground"
-        />
-        <component :is="icon" :class="['w-4 h-4', node.type === 'folder' ? 'text-primary' : 'text-muted-foreground']" />
-        <span class="text-sm truncate">{{ node.name }}</span>
-      </button>
-      <div v-if="node.type === 'folder' && expanded && node.children">
-        <FileTreeNode
-          v-for="child in node.children"
-          :key="child.id"
-          :node="child"
-          :depth="depth + 1"
-          :selected-id="selectedId"
-          @select="$emit('select', $event)"
-        />
-      </div>
-    </div>
-  `,
 });
+
+watch(
+  () => selectedFile.value,
+  async (file) => {
+    if (!file?.path || !props.projectPath) {
+      contentTruncated.value = false;
+      return;
+    }
+    if (file.content) {
+      contentTruncated.value = false;
+      return;
+    }
+    if (contentCache.value[file.path]) {
+      contentTruncated.value = truncatedCache.value[file.path] || false;
+      return;
+    }
+
+    contentLoading.value = true;
+    contentTruncated.value = false;
+    try {
+      const response = await getProjectFileContent(props.projectPath, file.path);
+      contentCache.value = { ...contentCache.value, [file.path]: response.content };
+      truncatedCache.value = { ...truncatedCache.value, [file.path]: response.truncated };
+      contentTruncated.value = response.truncated;
+    } catch (error) {
+      console.error('Failed to load file content:', error);
+    } finally {
+      contentLoading.value = false;
+    }
+  }
+);
+
+watch(
+  () => props.projectPath,
+  () => {
+    selectedId.value = null;
+    contentCache.value = {};
+    truncatedCache.value = {};
+    contentTruncated.value = false;
+  }
+);
 </script>

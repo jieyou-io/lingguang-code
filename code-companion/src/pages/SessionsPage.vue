@@ -144,10 +144,12 @@
       </template>
     </div>
 
-    <CodeFileBrowserDialog
-      v-model:open="codeDialogOpen"
-      :project-name="currentProject.name"
-    />
+  <CodeFileBrowserDialog
+    v-model:open="codeDialogOpen"
+    :project-name="currentProject.name"
+    :project-path="projectPath"
+    :file-tree="fileTree"
+  />
   </AppShell>
 </template>
 
@@ -162,6 +164,8 @@ import CodeFileBrowserDialog from '@/components/project/CodeFileBrowserDialog.vu
 import { useSessions } from '@/composables/useSessions';
 import { useToast } from '@/composables/useToast';
 import { getQuickStats, type QuickStatsResponse } from '@/lib/usage-api';
+import { getProjectFileTree } from '@/lib/services/project-files';
+import { ProjectFileNode } from '@/types';
 
 const router = useRouter();
 const route = useRoute();
@@ -198,6 +202,8 @@ const { sessions, loading: isLoading, error, loadSessions, removeSession } = pro
 
 const codeDialogOpen = ref(false);
 const selectedEngine = ref<string | null>(null);
+const fileTree = ref<ProjectFileNode[]>([]);
+const fileTreeLoading = ref(false);
 
 // 快速统计数据
 const quickStats = ref<QuickStatsResponse | null>(null);
@@ -313,6 +319,25 @@ const handleDeleteSession = async (sessionId: string) => {
 const handleViewCode = () => {
   codeDialogOpen.value = true;
 };
+
+const loadFileTree = async () => {
+  if (!projectPath.value) return;
+  fileTreeLoading.value = true;
+  try {
+    fileTree.value = await getProjectFileTree(projectPath.value);
+  } catch (error) {
+    console.error('Failed to load file tree:', error);
+    fileTree.value = [];
+  } finally {
+    fileTreeLoading.value = false;
+  }
+};
+
+watch([codeDialogOpen, projectPath], ([open, path]) => {
+  if (open && path) {
+    loadFileTree();
+  }
+});
 
 const formatNumber = (num: number) => {
   if (num >= 1000) {

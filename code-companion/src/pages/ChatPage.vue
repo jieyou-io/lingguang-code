@@ -65,6 +65,7 @@
       <ContextBar
         :session="session"
         :context-items="activeContextItems"
+        :file-tree="fileTree"
         :model="currentModel"
         :thinking-enabled="session.thinkingEnabled"
         :plan-mode-enabled="session.planModeEnabled"
@@ -115,6 +116,8 @@
       <CodeFileBrowserDialog
         :open="codeDialogOpen"
         :project-name="session.title"
+        :project-path="currentProjectPath"
+        :file-tree="fileTree"
         @update:open="codeDialogOpen = $event"
       />
 
@@ -141,7 +144,7 @@ import StreamingIndicator from '@/components/chat/StreamingIndicator.vue';
 import OfflineIndicator from '@/components/chat/OfflineIndicator.vue';
 import CodeFileBrowserDialog from '@/components/project/CodeFileBrowserDialog.vue';
 import AskUserQuestionDialog from '@/components/dialogs/AskUserQuestionDialog.vue';
-import { Message, Session, AIEngine, AIModel, ContextItem, ToolUseBlock } from '@/types';
+import { Message, Session, AIEngine, AIModel, ContextItem, ToolUseBlock, ProjectFileNode } from '@/types';
 import { useStreaming } from '@/composables/useStreaming';
 import { useSessionPersistence } from '@/composables/useSessionPersistence';
 import { useChatSession } from '@/composables/useChatSession';
@@ -151,6 +154,7 @@ import type { CompressionStrategy, CompressionOptions } from '@/components/chat/
 import { useToast } from '@/composables/useToast';
 import { saveSession } from '@/lib/sessionStorage';
 import { mapBackendModelToFrontend } from '@/utils/modelMapper';
+import { getProjectFileTree } from '@/lib/services/project-files';
 
 const route = useRoute();
 const router = useRouter();
@@ -177,6 +181,8 @@ const messagesContainerRef = ref<HTMLDivElement | null>(null);
 const streamingMessageIdRef = ref<string | null>(null);
 const streamingContentRef = ref('');
 const codeDialogOpen = ref(false);
+const fileTree = ref<ProjectFileNode[]>([]);
+const fileTreeLoading = ref(false);
 const isLoadingMore = ref(false); // 标记是否正在加载更多历史消息
 const isInitialLoad = ref(true); // 标记是否是初始加载
 const geminiSessionAlias = ref<string>('');
@@ -197,6 +203,27 @@ onMounted(() => {
     handleSend(message);
   });
 });
+
+const loadFileTree = async () => {
+  if (!currentProjectPath.value) return;
+  fileTreeLoading.value = true;
+  try {
+    fileTree.value = await getProjectFileTree(currentProjectPath.value);
+  } catch (error) {
+    console.error('Failed to load file tree:', error);
+    fileTree.value = [];
+  } finally {
+    fileTreeLoading.value = false;
+  }
+};
+
+watch(currentProjectPath, (path) => {
+  if (path) {
+    loadFileTree();
+  } else {
+    fileTree.value = [];
+  }
+}, { immediate: true });
 
 // 🔥 检测是否是新会话（sessionId 是纯数字时间戳）
 const isNewSession = computed(() => /^\d{13,}$/.test(sessionId.value));
@@ -551,6 +578,9 @@ const handleRetry = () => {
 };
 
 const handleViewCode = () => {
+  if (!fileTreeLoading.value && fileTree.value.length === 0) {
+    loadFileTree();
+  }
   codeDialogOpen.value = true;
 };
 

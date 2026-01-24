@@ -68,13 +68,15 @@
       v-if="selectedProject"
       :open="codeFileBrowserOpen"
       :project-name="selectedProject.name"
+      :project-path="selectedProject.path"
+      :file-tree="fileTree"
       @update:open="codeFileBrowserOpen = $event"
     />
   </AppShell>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { Plus, Search } from 'lucide-vue-next';
 import AppShell from '@/components/layout/AppShell.vue';
@@ -83,14 +85,17 @@ import ProjectCard from '@/components/project/ProjectCard.vue';
 import NotificationBindingDialog from '@/components/project/NotificationBindingDialog.vue';
 import CodeFileBrowserDialog from '@/components/project/CodeFileBrowserDialog.vue';
 import { useProjects } from '@/composables/useProjects';
-import { Project } from '@/types';
+import { Project, ProjectFileNode } from '@/types';
 import { getQuickStats, type QuickStatsResponse } from '@/lib/usage-api';
+import { getProjectFileTree } from '@/lib/services/project-files';
 
 const router = useRouter();
 const searchQuery = ref('');
 const notificationDialogOpen = ref(false);
 const codeFileBrowserOpen = ref(false);
 const selectedProject = ref<Project | null>(null);
+const fileTree = ref<ProjectFileNode[]>([]);
+const fileTreeLoading = ref(false);
 
 // 使用真实 API 数据
 const { projects, loading, error, loadProjects } = useProjects();
@@ -159,4 +164,23 @@ const handleOpen = (project: Project) => {
   const encodedPath = encodeURIComponent(project.path);
   router.push(`/sessions/${encodedPath}`);
 };
+
+const loadFileTree = async () => {
+  if (!selectedProject.value) return;
+  fileTreeLoading.value = true;
+  try {
+    fileTree.value = await getProjectFileTree(selectedProject.value.path);
+  } catch (error) {
+    console.error('Failed to load file tree:', error);
+    fileTree.value = [];
+  } finally {
+    fileTreeLoading.value = false;
+  }
+};
+
+watch([codeFileBrowserOpen, selectedProject], ([open]) => {
+  if (open) {
+    loadFileTree();
+  }
+});
 </script>

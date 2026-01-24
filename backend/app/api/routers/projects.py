@@ -12,6 +12,7 @@ from app.schemas.projects import (
     SessionListResponse,
     SessionResponse,
 )
+from app.schemas.project_files import FileTreeResponse, FileContentResponse
 from app.services.project_manager import ProjectManagerService
 from app.services.project_manager.session_scanner import CodexSessionScanner, GeminiSessionScanner
 from app.services.project_manager.session_loader import (
@@ -19,6 +20,7 @@ from app.services.project_manager.session_loader import (
     CodexSessionLoader,
     GeminiSessionLoader,
 )
+from app.services.project_files import ProjectFileService
 
 router = APIRouter()
 
@@ -26,6 +28,11 @@ router = APIRouter()
 def build_service() -> ProjectManagerService:
     """构建项目管理服务实例"""
     return ProjectManagerService()
+
+
+def build_file_service() -> ProjectFileService:
+    """构建项目文件服务实例"""
+    return ProjectFileService()
 
 
 @router.get(
@@ -114,6 +121,53 @@ async def compare_projects(
     result = service.compare_projects(integrated_paths, scanned)
 
     return ProjectCompareResponse(**result)
+
+
+@router.get(
+    "/v1/projects/files/tree",
+    response_model=FileTreeResponse,
+    summary="获取项目文件树",
+    description="按项目路径扫描并返回文件树结构。",
+)
+async def get_project_file_tree(
+    project_path: str = Query(..., description="项目路径"),
+    max_depth: int = Query(4, description="最大扫描深度", ge=1, le=12),
+    max_files: int = Query(3000, description="最大文件数量", ge=1, le=20000),
+    include_hidden: bool = Query(False, description="是否包含隐藏文件"),
+):
+    service = build_file_service()
+    files = service.build_tree(
+        project_path=project_path,
+        max_depth=max_depth,
+        max_files=max_files,
+        include_hidden=include_hidden,
+    )
+    return FileTreeResponse(files=files)
+
+
+@router.get(
+    "/v1/projects/files/content",
+    response_model=FileContentResponse,
+    summary="读取文件内容",
+    description="读取指定项目下某个文件的内容。",
+)
+async def get_project_file_content(
+    project_path: str = Query(..., description="项目路径"),
+    file_path: str = Query(..., description="相对项目根目录的文件路径"),
+    max_bytes: int = Query(200000, description="最大读取字节数", ge=1, le=1000000),
+):
+    service = build_file_service()
+    result = service.read_file_content(
+        project_path=project_path,
+        file_path=file_path,
+        max_bytes=max_bytes,
+    )
+    return FileContentResponse(
+        path=result.path,
+        content=result.content,
+        truncated=result.truncated,
+        size=result.size,
+    )
 
 @router.get(
     "/v1/sessions/codex",

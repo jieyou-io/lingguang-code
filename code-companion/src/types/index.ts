@@ -89,6 +89,17 @@ export interface ContextItem {
   priority: number;
 }
 
+export interface ProjectFileNode {
+  id: string;
+  name: string;
+  path: string;
+  type: 'file' | 'folder';
+  children?: ProjectFileNode[];
+  extension?: string;
+  size?: number;
+  content?: string;
+}
+
 export interface TokenStats {
   today: number;
   thisWeek: number;

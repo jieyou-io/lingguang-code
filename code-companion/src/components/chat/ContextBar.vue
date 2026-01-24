@@ -104,6 +104,7 @@
     :open="fileManagerOpen"
     :on-open-change="(value) => (fileManagerOpen = value)"
     :context-items="contextItems"
+    :file-tree="fileTree"
     :on-add-file="handleAddFile"
     :on-remove-file="handleRemoveFile"
   />
@@ -119,7 +120,7 @@
 <script setup lang="ts">
 import { computed, ref, toRefs, onMounted } from 'vue';
 import { ChevronDown, FileCode, Zap, Coins, Minimize2, FolderOpen, Brain, ListChecks } from 'lucide-vue-next';
-import { Session, AIEngine, AIModel, ContextItem } from '@/types';
+import { Session, AIEngine, AIModel, ContextItem, ProjectFileNode } from '@/types';
 import EngineSelector from './EngineSelector.vue';
 import ContextItemList from './ContextItemList.vue';
 import FileManagerSheet from './FileManagerSheet.vue';
@@ -129,6 +130,7 @@ import { getQuickStats, type QuickStatsResponse } from '@/lib/usage-api';
 const props = defineProps<{
   session: Session;
   contextItems: ContextItem[];
+  fileTree?: ProjectFileNode[];
   model?: AIModel;
   thinkingEnabled?: boolean;
   planModeEnabled?: boolean;

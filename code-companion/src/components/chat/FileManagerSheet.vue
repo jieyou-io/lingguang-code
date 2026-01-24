@@ -25,7 +25,7 @@
         <div class="h-[calc(100vh-220px)] overflow-y-auto">
           <div class="space-y-0.5">
             <FileTreeNode
-              v-for="file in mockFileTree"
+              v-for="file in fileTree"
               :key="file.id"
               :file="file"
               :context-items="contextItems"
@@ -34,6 +34,9 @@
               @add-file="onAddFile"
               @remove-file="onRemoveFile"
             />
+            <div v-if="fileTree.length === 0" class="py-6 text-center text-sm text-muted-foreground">
+              暂无可用文件
+            </div>
           </div>
         </div>
       </div>
@@ -42,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineComponent, ref } from 'vue';
+import { computed, defineComponent, h, ref } from 'vue';
 import {
   Search,
   Folder,
@@ -54,72 +57,20 @@ import {
   ChevronRight,
   ChevronDown,
 } from 'lucide-vue-next';
-import { ContextItem } from '@/types';
-
-interface MockFile {
-  id: string;
-  name: string;
-  path: string;
-  type: 'file' | 'folder';
-  children?: MockFile[];
-  tokens?: number;
-  extension?: string;
-}
+import { ContextItem, ProjectFileNode } from '@/types';
 
 const props = defineProps<{
   open: boolean;
   onOpenChange: (open: boolean) => void;
   contextItems: ContextItem[];
-  onAddFile: (file: MockFile) => void;
+  fileTree?: ProjectFileNode[];
+  onAddFile: (file: ProjectFileNode) => void;
   onRemoveFile: (fileId: string) => void;
 }>();
 
 const searchQuery = ref('');
 
-const mockFileTree: MockFile[] = [
-  {
-    id: 'src',
-    name: 'src',
-    path: '/src',
-    type: 'folder',
-    children: [
-      {
-        id: 'components',
-        name: 'components',
-        path: '/src/components',
-        type: 'folder',
-        children: [
-          { id: 'Header.vue', name: 'Header.vue', path: '/src/components/Header.vue', type: 'file', tokens: 850, extension: 'vue' },
-          { id: 'Sidebar.vue', name: 'Sidebar.vue', path: '/src/components/Sidebar.vue', type: 'file', tokens: 1200, extension: 'vue' },
-          { id: 'ChatInput.vue', name: 'ChatInput.vue', path: '/src/components/ChatInput.vue', type: 'file', tokens: 650, extension: 'vue' },
-        ],
-      },
-      {
-        id: 'pages',
-        name: 'pages',
-        path: '/src/pages',
-        type: 'folder',
-        children: [
-          { id: 'Index.vue', name: 'Index.vue', path: '/src/pages/Index.vue', type: 'file', tokens: 1500, extension: 'vue' },
-          { id: 'Settings.vue', name: 'Settings.vue', path: '/src/pages/Settings.vue', type: 'file', tokens: 980, extension: 'vue' },
-        ],
-      },
-      { id: 'App.vue', name: 'App.vue', path: '/src/App.vue', type: 'file', tokens: 450, extension: 'vue' },
-      { id: 'main.ts', name: 'main.ts', path: '/src/main.ts', type: 'file', tokens: 120, extension: 'ts' },
-    ],
-  },
-  {
-    id: 'public',
-    name: 'public',
-    path: '/public',
-    type: 'folder',
-    children: [
-      { id: 'index.html', name: 'index.html', path: '/public/index.html', type: 'file', tokens: 80, extension: 'html' },
-    ],
-  },
-  { id: 'package.json', name: 'package.json', path: '/package.json', type: 'file', tokens: 200, extension: 'json' },
-  { id: 'README.md', name: 'README.md', path: '/README.md', type: 'file', tokens: 350, extension: 'md' },
-];
+const fileTree = computed(() => props.fileTree ?? []);
 
 const fileIcons: Record<string, any> = {
   tsx: FileCode,
@@ -140,7 +91,7 @@ const close = () => props.onOpenChange(false);
 const FileTreeNode = defineComponent({
   name: 'FileTreeNode',
   props: {
-    file: { type: Object as () => MockFile, required: true },
+    file: { type: Object as () => ProjectFileNode, required: true },
     depth: { type: Number, default: 0 },
     contextItems: { type: Array as () => ContextItem[], required: true },
     searchQuery: { type: String, required: true },
@@ -161,7 +112,7 @@ const FileTreeNode = defineComponent({
 
     const hasMatchingChildren = computed(() => {
       if (!localProps.searchQuery || localProps.file.type !== 'folder') return false;
-      const checkChildren = (children: MockFile[]): boolean => {
+      const checkChildren = (children: ProjectFileNode[]): boolean => {
         return children.some(child =>
           child.name.toLowerCase().includes(localProps.searchQuery.toLowerCase()) ||
           (child.children && checkChildren(child.children))
