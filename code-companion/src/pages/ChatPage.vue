@@ -403,6 +403,7 @@ const { status, isStreaming, content: streamingContent, send, interrupt, resume,
           id: toolUse.id,
           name: toolUse.name,
           input: toolUse.input,
+          meta: toolUse.meta,
         };
 
         if (!currentMessage.toolUseBlocks) {

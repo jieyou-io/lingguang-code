@@ -233,7 +233,7 @@ class ClaudeService:
         except Exception:
             pass
         self._registry.remove(session_id)
-        await self._runner.release()
+        await self._runner.release(session_id)
 
     async def stream_events(self, session_id: str) -> AsyncIterator[SSEEvent]:
         """流式返回 CLI 输出（在此处启动进程，确保前端不会错过事件）"""
@@ -348,6 +348,14 @@ class ClaudeService:
                             session_id=session_id,
                             tool_name=self._get_tool_name(parsed),
                         )
+                        if isinstance(parsed, dict):
+                            parsed = {
+                                **parsed,
+                                "meta": {
+                                    **(parsed.get("meta") or {}),
+                                    "skip_permissions": self._runner.should_skip_permissions(session_id),
+                                },
+                            }
 
                 logger.info(
                     "Sending SSE event to queue",
@@ -415,7 +423,7 @@ class ClaudeService:
             stderr_task.cancel()
             timeout_task.cancel()
             self._registry.remove(session_id)
-            await self._runner.release()
+            await self._runner.release(session_id)
             yield SSEEvent(
                 event_type=SSEEventType.COMPLETE,
                 session_id=session_id,

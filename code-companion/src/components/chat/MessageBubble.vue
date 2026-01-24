@@ -59,6 +59,15 @@
               :questions="block.input?.questions || []"
               @submit="(answers) => handleQuestionSubmit(block.id, answers)"
             />
+
+            <PermissionRequestCard
+              v-else-if="shouldShowPermissionCard(block) && message.sessionId"
+              :tool-name="block.name"
+              :tool-id="block.id"
+              :session-id="message.sessionId"
+              :input="block.input"
+              @respond="handlePermissionRespond"
+            />
           </template>
         </template>
 
@@ -75,6 +84,7 @@ import { computed } from 'vue';
 import { Message } from '@/types';
 import { renderMarkdown } from '@/utils/markdown';
 import AskUserQuestionCard from './AskUserQuestionCard.vue';
+import PermissionRequestCard from './PermissionRequestCard.vue';
 
 const props = defineProps<{ message: Message }>();
 
@@ -91,6 +101,12 @@ const isUser = computed(() => props.message.role === 'user');
 const isPermissionTool = (toolName: string): boolean => {
   const permissionTools = ['Write', 'Edit', 'Bash', 'NotebookEdit', 'KillShell'];
   return permissionTools.includes(toolName);
+};
+
+const shouldShowPermissionCard = (block: any): boolean => {
+  if (!isPermissionTool(block.name)) return false;
+  const skip = block?.input?.meta?.skip_permissions ?? block?.meta?.skip_permissions;
+  return skip !== true;
 };
 
 /**

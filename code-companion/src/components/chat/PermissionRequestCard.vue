@@ -127,7 +127,7 @@ const handleDeny = async () => {
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
 const sendPermissionResponse = async (resp: 'y' | 'n') => {
-  const res = await fetch(`${API_BASE_URL}/v1/claude/permission`, {
+  const res = await fetch(`${apiBaseUrl}/v1/claude/permission`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

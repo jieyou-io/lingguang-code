@@ -19,6 +19,7 @@ class ClaudeRunner:
         self._semaphore = asyncio.Semaphore(settings.MAX_CONCURRENT_SESSIONS)
         # 🔥 存储进程的 stdin，用于发送权限响应
         self._process_stdin: Dict[str, asyncio.StreamWriter] = {}
+        self._skip_permissions: Dict[str, bool] = {}
 
     async def start(
         self,
@@ -82,9 +83,13 @@ class ClaudeRunner:
 
         args.extend([
             "--output-format", "stream-json",
-            "--dangerously-skip-permissions",  # 跳过权限检查
             "--verbose",
         ])
+
+        # Root/sudo 环境下 Claude CLI 不允许跳过权限检查
+        skip_permissions = os.geteuid() != 0
+        if skip_permissions:
+            args.append("--dangerously-skip-permissions")
 
         # 打印完整的 CLI 命令
         logger.info(
@@ -115,6 +120,10 @@ class ClaudeRunner:
             returncode=process.returncode,
         )
 
+        if session_id and process.stdin:
+            self._process_stdin[session_id] = process.stdin
+            self._skip_permissions[session_id] = skip_permissions
+
         # 🔥 普通 prompt 通过 stdin 管道传递，避免命令行长度限制
         # 斜杠命令已通过 -p 参数传递，不需要 stdin
         if not is_slash_command:
@@ -123,12 +132,13 @@ class ClaudeRunner:
                 process.stdin.write(prompt.encode('utf-8'))
                 process.stdin.write(b'\n')
                 await process.stdin.drain()
-                process.stdin.close()
-                await process.stdin.wait_closed()
-                logger.info("Prompt written and stdin closed")
+                if not session_id or skip_permissions:
+                    process.stdin.close()
+                    await process.stdin.wait_closed()
+                    logger.info("Prompt written and stdin closed")
         else:
-            # 斜杠命令模式：关闭 stdin 以信号结束
-            if process.stdin:
+            # 斜杠命令模式：无 session_id 时关闭 stdin 以信号结束
+            if process.stdin and not session_id:
                 process.stdin.close()
                 await process.stdin.wait_closed()
                 logger.info("Stdin closed for slash command")
@@ -199,13 +209,19 @@ class ClaudeRunner:
     async def close_stdin(self, session_id: str) -> None:
         """关闭指定会话的 stdin"""
         stdin = self._process_stdin.pop(session_id, None)
+        self._skip_permissions.pop(session_id, None)
         if stdin:
             try:
+                if stdin.is_closing():
+                    return
                 stdin.close()
                 await stdin.wait_closed()
                 logger.info("Stdin closed for session", session_id=session_id)
             except Exception as e:
                 logger.warning("Error closing stdin", session_id=session_id, error=str(e))
+
+    def should_skip_permissions(self, session_id: str) -> bool:
+        return self._skip_permissions.get(session_id, False)
 
     async def release(self, session_id: Optional[str] = None) -> None:
         """释放并发令牌并清理 stdin"""

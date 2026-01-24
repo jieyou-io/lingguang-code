@@ -73,6 +73,7 @@ export interface ToolUseBlock {
   id: string;
   name: string;
   input?: any;
+  meta?: any;
 }
 
 export interface ContextItem {

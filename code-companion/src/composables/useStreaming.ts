@@ -14,6 +14,7 @@ export interface ToolUsePayload {
   id: string;
   name: string;
   input?: any;
+  meta?: any;
 }
 
 type MaybeRef<T> = T | Ref<T> | ComputedRef<T>;
@@ -147,6 +148,7 @@ export function useStreaming(options: UseStreamingOptions): UseStreamingReturn {
         id: item.id || '',
         name: item.name || '',
         input: item.input,
+        meta: item.meta ?? payload?.meta,
       }))
       .filter((item: ToolUsePayload) => item.id && item.name);
   };
