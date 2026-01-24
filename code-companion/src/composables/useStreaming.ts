@@ -24,7 +24,6 @@ interface UseStreamingOptions {
   engine: MaybeRef<AIEngine>;
   protocol?: 'sse' | 'websocket';
   baseUrl?: MaybeRef<string>;
-  useMock?: MaybeRef<boolean>;
   projectPath?: MaybeRef<string>;
   model?: MaybeRef<string>;
   planMode?: MaybeRef<boolean>;
@@ -52,7 +51,6 @@ interface UseStreamingReturn {
 
 const apiBaseUrl =
     import.meta.env.VITE_API_BASE_URL;
-const defaultUseMock = import.meta.env.VITE_USE_MOCK === 'true';
 
 export function useStreaming(options: UseStreamingOptions): UseStreamingReturn {
   const status = ref<StreamingStatus>('idle');
@@ -66,8 +64,7 @@ export function useStreaming(options: UseStreamingOptions): UseStreamingReturn {
     () => status.value === 'streaming' || status.value === 'connecting'
   );
 
-  const resolveBaseUrl = () => unref(options.baseUrl) || defaultBaseUrl;
-  const resolveUseMock = () => unref(options.useMock) ?? defaultUseMock;
+  const resolveBaseUrl = () => unref(options.baseUrl) || apiBaseUrl;
   const resolveEngine = () => unref(options.engine);
   const resolveSessionId = () => unref(options.sessionId);
   const resolveProjectPath = () => unref(options.projectPath);
@@ -347,16 +344,6 @@ export function useStreaming(options: UseStreamingOptions): UseStreamingReturn {
 
   const send = async (message: string) => {
     if (resolveEnabled() === false) {
-      return null;
-    }
-
-    if (resolveUseMock()) {
-      status.value = 'streaming';
-      const mockResponse = 'Mock response...\n';
-      content.value = mockResponse;
-      options.onToken?.(mockResponse, mockResponse);
-      options.onComplete?.(mockResponse);
-      status.value = 'completed';
       return null;
     }
 

@@ -331,7 +331,6 @@ const { status, isStreaming, content: streamingContent, send, interrupt, resume,
   sessionId: computed(() => session.value.id),
   engine: computed(() => session.value.engine),
   protocol: 'sse',
-  useMock: false,
   projectPath: currentProjectPath, // 🔥 使用从 URL 解码的项目路径
   model: currentModel,
   enabled: hasProject,
