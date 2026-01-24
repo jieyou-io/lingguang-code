@@ -188,59 +188,81 @@ const FileTreeNode = defineComponent({
       }
     };
 
-    return {
-      expanded,
-      isInContext,
-      matchesSearch,
-      hasMatchingChildren,
-      Icon,
-      handleToggle,
-      ChevronDown,
-      ChevronRight,
-      Plus,
-      Check,
+    return () => {
+      const shouldShow =
+        matchesSearch.value || hasMatchingChildren.value || localProps.file.type === 'folder';
+      if (!shouldShow) {
+        return null;
+      }
+
+      const paddingLeft = `${localProps.depth * 12 + 8}px`;
+      const caret =
+        localProps.file.type === 'folder'
+          ? h(expanded.value ? ChevronDown : ChevronRight, {
+              class: 'w-3.5 h-3.5 text-muted-foreground',
+            })
+          : h('span');
+
+      const iconNode = h(Icon.value, {
+        class: [
+          'w-4 h-4',
+          localProps.file.type === 'folder' ? 'text-primary' : 'text-muted-foreground',
+        ],
+      });
+
+      const label = h('span', { class: 'flex-1 text-sm truncate' }, localProps.file.name);
+
+      const trailing: any[] = [];
+      if (localProps.file.type === 'file') {
+        if (localProps.file.tokens != null) {
+          trailing.push(
+            h(
+              'span',
+              { class: 'text-[10px] text-muted-foreground' },
+              localProps.file.tokens.toLocaleString() + ' tokens'
+            )
+          );
+        }
+        trailing.push(
+          isInContext.value
+            ? h(Check, { class: 'w-4 h-4 text-primary' })
+            : h(Plus, { class: 'w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100' })
+        );
+      }
+
+      const button = h(
+        'button',
+        {
+          onClick: handleToggle,
+          class: [
+            'w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-colors',
+            isInContext.value ? 'bg-primary/10 text-primary' : 'hover:bg-muted',
+          ],
+          style: { paddingLeft },
+        },
+        [caret, iconNode, label, ...trailing]
+      );
+
+      const children =
+        localProps.file.type === 'folder' && expanded.value && localProps.file.children
+          ? h(
+              'div',
+              localProps.file.children.map((child) =>
+                h(FileTreeNode, {
+                  key: child.id,
+                  file: child,
+                  depth: localProps.depth + 1,
+                  contextItems: localProps.contextItems,
+                  searchQuery: localProps.searchQuery,
+                  onAddFile: (file: ProjectFileNode) => emit('add-file', file),
+                  onRemoveFile: (fileId: string) => emit('remove-file', fileId),
+                })
+              )
+            )
+          : null;
+
+      return h('div', [button, children]);
     };
   },
-  template: `
-    <div>
-      <button
-        v-if="matchesSearch || hasMatchingChildren || file.type === 'folder'"
-        @click="handleToggle"
-        :class="[
-          'w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-colors',
-          isInContext ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-        ]"
-        :style="{ paddingLeft: (depth * 12 + 8) + 'px' }"
-      >
-        <component
-          :is="file.type === 'folder' ? (expanded ? ChevronDown : ChevronRight) : 'span'"
-          class="w-3.5 h-3.5 text-muted-foreground"
-        />
-
-        <component :is="Icon" :class="['w-4 h-4', file.type === 'folder' ? 'text-primary' : 'text-muted-foreground']" />
-
-        <span class="flex-1 text-sm truncate">{{ file.name }}</span>
-
-        <template v-if="file.type === 'file'">
-          <span class="text-[10px] text-muted-foreground">{{ file.tokens?.toLocaleString() }} tokens</span>
-          <Check v-if="isInContext" class="w-4 h-4 text-primary" />
-          <Plus v-else class="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100" />
-        </template>
-      </button>
-
-      <div v-if="file.type === 'folder' && expanded && file.children">
-        <FileTreeNode
-          v-for="child in file.children"
-          :key="child.id"
-          :file="child"
-          :depth="depth + 1"
-          :context-items="contextItems"
-          :search-query="searchQuery"
-          @add-file="$emit('add-file', $event)"
-          @remove-file="$emit('remove-file', $event)"
-        />
-      </div>
-    </div>
-  `,
 });
 </script>
