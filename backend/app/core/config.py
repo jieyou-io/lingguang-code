@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     # SSE 配置
     SSE_KEEPALIVE_SECONDS: int = 15
 
+    # Claude 权限自动授权（Web/飞书默认 y）
+    CLAUDE_AUTO_APPROVE_PERMISSIONS: bool = True
+
     # 日志配置
     LOG_LEVEL: str = "info"
     LOG_JSON: bool = True

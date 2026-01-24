@@ -342,20 +342,31 @@ class ClaudeService:
                 if parsed:
                     # 检测权限请求（tool_use 类型，需要用户授权的工具）
                     if self._is_permission_request(parsed):
-                        event_type = SSEEventType.PERMISSION_REQUEST
-                        logger.info(
-                            "Permission request detected",
-                            session_id=session_id,
-                            tool_name=self._get_tool_name(parsed),
-                        )
-                        if isinstance(parsed, dict):
-                            parsed = {
-                                **parsed,
-                                "meta": {
-                                    **(parsed.get("meta") or {}),
-                                    "skip_permissions": self._runner.should_skip_permissions(session_id),
-                                },
-                            }
+                        tool_name = self._get_tool_name(parsed)
+                        if settings.CLAUDE_AUTO_APPROVE_PERMISSIONS:
+                            logger.info(
+                                "Permission auto-approved",
+                                session_id=session_id,
+                                tool_name=tool_name,
+                                skip_permissions=self._runner.should_skip_permissions(session_id),
+                            )
+                            if not self._runner.should_skip_permissions(session_id):
+                                await self._runner.send_permission_response(session_id, "y")
+                        else:
+                            event_type = SSEEventType.PERMISSION_REQUEST
+                            logger.info(
+                                "Permission request detected",
+                                session_id=session_id,
+                                tool_name=tool_name,
+                            )
+                            if isinstance(parsed, dict):
+                                parsed = {
+                                    **parsed,
+                                    "meta": {
+                                        **(parsed.get("meta") or {}),
+                                        "skip_permissions": self._runner.should_skip_permissions(session_id),
+                                    },
+                                }
 
                 logger.info(
                     "Sending SSE event to queue",

@@ -72,13 +72,20 @@ class ClaudeRunner:
             resolved_model = model_alias_map.get(model, model)
             args.extend(["--model", resolved_model])
 
+        # Root/sudo 环境下 Claude CLI 不允许跳过权限检查
+        skip_permissions = os.geteuid() != 0
+
         # 🔥 检测斜杠命令（如 /mcp, /compact, /help）
         # Claude CLI 只在 -p 参数中解析斜杠命令，stdin 管道不会触发
         is_slash_command = self._is_slash_command(prompt)
 
-        if is_slash_command:
-            # 斜杠命令通过 -p 参数传递
-            logger.info("Detected slash command, using -p flag", command=prompt.strip())
+        # Root 环境需要保留 stdin 用于权限响应，因此用 -p 传递初始 prompt
+        use_prompt_arg = is_slash_command or (session_id and not skip_permissions)
+        if use_prompt_arg:
+            if is_slash_command:
+                logger.info("Detected slash command, using -p flag", command=prompt.strip())
+            elif session_id and not skip_permissions:
+                logger.info("Using -p for prompt to keep stdin open for permission responses", session_id=session_id)
             args.extend(["-p", prompt])
 
         args.extend([
@@ -86,8 +93,6 @@ class ClaudeRunner:
             "--verbose",
         ])
 
-        # Root/sudo 环境下 Claude CLI 不允许跳过权限检查
-        skip_permissions = os.geteuid() != 0
         if skip_permissions:
             args.append("--dangerously-skip-permissions")
 
@@ -125,8 +130,8 @@ class ClaudeRunner:
             self._skip_permissions[session_id] = skip_permissions
 
         # 🔥 普通 prompt 通过 stdin 管道传递，避免命令行长度限制
-        # 斜杠命令已通过 -p 参数传递，不需要 stdin
-        if not is_slash_command:
+        # 使用 -p 时不再写 stdin，避免 CLI 等待 EOF
+        if not use_prompt_arg:
             if process.stdin:
                 logger.info("Writing prompt to stdin", prompt_length=len(prompt))
                 process.stdin.write(prompt.encode('utf-8'))
@@ -137,11 +142,11 @@ class ClaudeRunner:
                     await process.stdin.wait_closed()
                     logger.info("Prompt written and stdin closed")
         else:
-            # 斜杠命令模式：无 session_id 时关闭 stdin 以信号结束
+            # -p 模式：无 session_id 时关闭 stdin 以信号结束
             if process.stdin and not session_id:
                 process.stdin.close()
                 await process.stdin.wait_closed()
-                logger.info("Stdin closed for slash command")
+                logger.info("Stdin closed for -p prompt")
 
         return process
 
