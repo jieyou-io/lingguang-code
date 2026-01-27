@@ -343,6 +343,24 @@ class ClaudeService:
                     # 检测权限请求（tool_use 类型，需要用户授权的工具）
                     if self._is_permission_request(parsed):
                         tool_name = self._get_tool_name(parsed)
+                        # 为工具调用补充 meta，避免前端继续弹权限卡片
+                        if isinstance(parsed, dict):
+                            parsed = {
+                                **parsed,
+                                "meta": {
+                                    **(parsed.get("meta") or {}),
+                                    "skip_permissions": True,
+                                },
+                            }
+                            message = parsed.get("message", {})
+                            content = message.get("content")
+                            if isinstance(content, list):
+                                for item in content:
+                                    if isinstance(item, dict) and item.get("type") == "tool_use":
+                                        item["meta"] = {
+                                            **(item.get("meta") or {}),
+                                            "skip_permissions": True,
+                                        }
                         if settings.CLAUDE_AUTO_APPROVE_PERMISSIONS:
                             logger.info(
                                 "Permission auto-approved",

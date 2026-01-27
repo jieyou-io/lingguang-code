@@ -229,6 +229,12 @@ export function useStreaming(options: UseStreamingOptions): UseStreamingReturn {
     eventSource.value.addEventListener('error', (event) => {
       const data = parseJsonSafe((event as MessageEvent).data);
       const message = data?.payload?.error || 'SSE error';
+      if (typeof message === 'string' && message.startsWith('Error executing tool')) {
+        const nextContent = `${content.value}\n\n[工具错误] ${message}`;
+        content.value = nextContent;
+        options.onToken?.('', nextContent);
+        return;
+      }
       setError(new Error(message));
       disconnect();
     });

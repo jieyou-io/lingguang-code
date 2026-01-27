@@ -137,7 +137,7 @@
           placeholder="描述你想要做的事..."
           rows="1"
           :class="[
-            'w-full px-4 py-3 bg-transparent text-sm resize-none placeholder:text-muted-foreground focus:outline-none max-h-32',
+            'w-full px-4 py-3 bg-transparent text-sm resize-none text-foreground caret-foreground placeholder:text-muted-foreground/70 focus:outline-none max-h-32',
             showCommandSuggestions ? 'text-primary' : ''
           ]"
           :disabled="disabled"
