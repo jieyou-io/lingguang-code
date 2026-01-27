@@ -202,8 +202,8 @@ class MCPService:
                 message=f"MCP 服务器 '{request['name']}' 已存在",
             )
 
-        # 添加新服务器
-        servers[request["name"]] = {
+        # 添加新服务器（过滤 None，避免 TOML 序列化失败）
+        server_payload = {
             "transport": request["transport"],
             "command": request.get("command"),
             "args": request.get("args", []),
@@ -212,6 +212,7 @@ class MCPService:
             "scope": request.get("scope", "local"),
             "isActive": request.get("isActive", True),
         }
+        servers[request["name"]] = {k: v for k, v in server_payload.items() if v is not None}
 
         data[servers_key] = servers
 
