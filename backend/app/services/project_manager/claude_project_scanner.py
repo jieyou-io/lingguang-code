@@ -385,6 +385,7 @@ class ClaudeProjectScanner:
         Returns:
             模型名称
         """
+        default_model = self._get_default_model()
         try:
             with session_file.open("r", encoding="utf-8", errors="ignore") as f:
                 for line in f:
@@ -396,20 +397,46 @@ class ClaudeProjectScanner:
                         data = json.loads(line)
                         # 先检查顶层 model 字段
                         model = data.get("model")
-                        if model:
+                        if model and model != "<synthetic>":
                             return model
 
                         # 再检查 message.model 字段（Claude 会话通常在这里）
                         message = data.get("message", {})
                         if isinstance(message, dict):
                             model = message.get("model")
-                            if model:
+                            if model and model != "<synthetic>":
                                 return model
                     except json.JSONDecodeError:
                         continue
 
         except OSError:
             pass
+
+        return default_model
+
+    def _get_default_model(self) -> Optional[str]:
+        """从 ~/.claude/config.json 读取默认模型（优先 Sonnet）"""
+        try:
+            config_path = self._claude_dir / "config.json"
+            if config_path.exists():
+                with config_path.open("r", encoding="utf-8") as f:
+                    config = json.load(f)
+                env = config.get("env", {})
+                sonnet = env.get("ANTHROPIC_DEFAULT_SONNET_MODEL") or env.get("ANTHROPIC_MODEL")
+                if sonnet:
+                    return sonnet
+                opus = env.get("ANTHROPIC_DEFAULT_OPUS_MODEL")
+                if opus:
+                    return opus
+                haiku = env.get("ANTHROPIC_DEFAULT_HAIKU_MODEL")
+                if haiku:
+                    return haiku
+                reasoning = env.get("ANTHROPIC_REASONING_MODEL")
+                if reasoning:
+                    return reasoning
+        except Exception:
+            return None
+        return None
 
         # 如果没有找到模型，根据引擎返回默认模型
         if engine == "codex":
