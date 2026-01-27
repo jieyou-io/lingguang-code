@@ -415,9 +415,9 @@ class ClaudeProjectScanner:
         return default_model
 
     def _get_default_model(self) -> Optional[str]:
-        """从 ~/.claude/config.json 读取默认模型（优先 Sonnet）"""
+        """从 ~/.claude/settings.json 读取默认模型（优先 Sonnet）"""
         try:
-            config_path = self._claude_dir / "config.json"
+            config_path = self._claude_dir / "settings.json"
             if config_path.exists():
                 with config_path.open("r", encoding="utf-8") as f:
                     config = json.load(f)

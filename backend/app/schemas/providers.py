@@ -13,6 +13,9 @@ class ProviderConfigResponse(BaseModel):
 
 class ProviderConfigUpdateRequest(BaseModel):
     """Provider 配置更新请求"""
+    env: Optional[Dict[str, Any]] = Field(default=None, description="Claude settings.json 的 env 字段")
+    apiKeyHelper: Optional[str] = Field(default=None, description="Claude settings.json 的 apiKeyHelper")
+    includeCoAuthoredBy: Optional[bool] = Field(default=None, description="Claude settings.json 的 includeCoAuthoredBy")
     apiKey: Optional[str] = Field(default=None, description="API Key")
     baseUrl: Optional[str] = Field(default=None, description="API Base URL")
     enabled: Optional[bool] = Field(default=None, description="是否启用")

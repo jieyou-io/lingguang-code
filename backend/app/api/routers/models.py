@@ -29,9 +29,9 @@ router = APIRouter()
 # ============================================================================
 
 def get_claude_config() -> dict:
-    """读取 Claude 配置文件 ~/.claude/config.json"""
+    """读取 Claude 配置文件 ~/.claude/settings.json"""
     try:
-        config_path = Path.home() / ".claude" / "config.json"
+        config_path = Path.home() / ".claude" / "settings.json"
         if config_path.exists():
             with open(config_path, "r", encoding="utf-8") as f:
                 return json.load(f)
