@@ -1,9 +1,9 @@
 import { Message, Session, ContextItem } from '@/types';
 
-const STORAGE_KEY = 'anycode_sessions';
-const MESSAGES_KEY = 'anycode_messages';
-const CHECKPOINT_KEY = 'anycode_checkpoints';
-const CONTEXT_ITEMS_KEY = 'anycode_context_items';
+const STORAGE_KEY = 'lingguang_sessions';
+const MESSAGES_KEY = 'lingguang_messages';
+const CHECKPOINT_KEY = 'lingguang_checkpoints';
+const CONTEXT_ITEMS_KEY = 'lingguang_context_items';
 
 export interface SessionCheckpoint {
   sessionId: string;

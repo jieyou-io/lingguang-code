@@ -55,7 +55,7 @@ class Settings(BaseSettings):
     FEISHU_ENCRYPT_KEY: str = ""
     FEISHU_VERIFICATION_TOKEN: str = ""
     FEISHU_BOT_OPEN_ID: str = ""
-    FEISHU_STATE_PATH: str = "~/.anycode/feishu_state.json"
+    FEISHU_STATE_PATH: str = "~/.lingguang/feishu_state.json"
     FEISHU_DEFAULT_ENGINE: str = "claude"
     FEISHU_DEFAULT_MODEL: str = "claude-sonnet-4-5"
     FEISHU_REQUIRE_MENTION_DEFAULT: bool = True

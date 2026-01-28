@@ -16,7 +16,7 @@ from app.core.config import settings
 
 def add_app_context(logger: Any, method_name: str, event_dict: EventDict) -> EventDict:
     """添加应用上下文到日志"""
-    event_dict["service"] = "anycode-backend"
+    event_dict["service"] = "lingguang-backend"
     event_dict["version"] = settings.APP_VERSION
     return event_dict
 
