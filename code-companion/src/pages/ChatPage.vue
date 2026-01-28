@@ -1,9 +1,9 @@
 <template>
   <AppShell hide-nav>
-    <div v-if="!initialized" class="flex items-center justify-center h-screen">
+    <div v-if="!initialized" class="flex items-center justify-center min-h-[100dvh]">
       <div class="animate-pulse text-muted-foreground">加载中...</div>
     </div>
-    <div v-else-if="!hasProject" class="flex items-center justify-center h-screen">
+    <div v-else-if="!hasProject" class="flex items-center justify-center min-h-[100dvh]">
       <div class="text-center">
         <p class="text-muted-foreground mb-4">请先选择一个项目</p>
         <button
@@ -14,7 +14,7 @@
         </button>
       </div>
     </div>
-    <div v-else class="flex flex-col h-screen">
+    <div v-else class="flex flex-col h-[100dvh]">
       <Header :title="session.title || sessionId" back>
         <template #actions>
           <div class="flex items-center gap-1">

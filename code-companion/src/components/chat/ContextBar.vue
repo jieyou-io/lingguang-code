@@ -1,7 +1,7 @@
 <template>
   <div class="border-b border-border">
     <div class="flex items-center justify-between px-4 py-2">
-      <div class="flex items-center gap-3">
+      <div class="flex flex-1 flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
         <EngineSelector
           :engine="session.engine"
           :on-change="handleEngineChange"
@@ -27,7 +27,7 @@
         </div>
       </div>
       <button
-        class="flex items-center gap-2 hover:bg-secondary/50 px-2 py-1 rounded transition-colors"
+        class="flex items-center gap-2 hover:bg-secondary/50 px-2 py-1 rounded transition-colors shrink-0"
         @click="expanded = !expanded"
       >
         <div class="flex items-center gap-1.5">

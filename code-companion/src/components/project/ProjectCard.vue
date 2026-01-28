@@ -37,7 +37,7 @@
       </div>
     </button>
 
-    <div class="absolute top-2 right-8 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+    <div class="absolute top-2 right-2 flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
       <button
         v-if="onBindNotification"
         class="p-2 rounded-lg bg-secondary text-muted-foreground hover:bg-secondary/80 transition-colors"

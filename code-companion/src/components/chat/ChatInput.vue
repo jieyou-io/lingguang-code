@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed bottom-16 left-0 right-0 z-40 glass border-t border-border p-3">
+  <div class="fixed bottom-0 left-0 right-0 z-40 glass border-t border-border p-3 safe-area-bottom">
     <div class="flex items-end gap-2">
       <div ref="settingsRef" class="relative">
         <button
